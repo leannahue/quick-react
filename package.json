@@ -6,9 +6,11 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.4.0",
     "@testing-library/user-event": "^7.2.1",
+    "firebase": "^7.6.1",
     "rbx": "^2.2.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "react-firebaseui": "^4.0.0",
     "react-scripts": "3.3.0"
   },
   "scripts": {
@@ -34,5 +36,17 @@
   },
   "devDependencies": {
     "typescript": "^3.7.4"
-  }
+  },
+  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leannahue/quick-react.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/leannahue/quick-react/issues"
+  },
+  "homepage": "https://github.com/leannahue/quick-react#readme"
 }
