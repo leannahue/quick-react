@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import 'rbx/index.css';
-import { Button, Container, Title } from 'rbx';
+import { Button, Container, Message, Title } from 'rbx';
 import firebase from 'firebase/app';
 import 'firebase/database';
+import 'firebase/auth';
+import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAfGS00xA3xkyqeO7mL5Q3BJ0GppLPiOkA",
-  authDomain: "quick-react-556c4.firebaseapp.com",
-  databaseURL: "https://quick-react-556c4.firebaseio.com",
-  projectId: "quick-react-556c4",
-  storageBucket: "quick-react-556c4.appspot.com",
-  messagingSenderId: "480352769279",
-  appId: "1:480352769279:web:c5ff51a2686d940a6468ca",
-  measurementId: "G-5DPXQZH6C9",
+  apiKey: "AIzaSyBBofV2uz4unG7JWrvTnCLjb3J8SJjGqgA",
+  authDomain: "quick-react-data-ad8b2.firebaseapp.com",
+  databaseURL: "https://quick-react-data-ad8b2.firebaseio.com",
+  projectId: "quick-react-data-ad8b2",
+  storageBucket: "quick-react-data-ad8b2.appspot.com",
+  messagingSenderId: "515621798921",
+  appId: "1:515621798921:web:b9cd67fa8fa4db018464d8",
+  measurementId: "G-V4ZLF0DLVG"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref();
 
-const Banner = ({ title }) => (
-  <Title>{title || '[loading...]'}</Title>
+const Banner = ({ user, title }) => (
+  <React.Fragment>
+    {user ? <Welcome user={user} /> : <SignIn />}
+    <Title>{title || '[loading...]'}</Title>
+  </React.Fragment>
 );
 
 const buttonColor = selected => (
@@ -49,7 +54,7 @@ const TermSelector = ({ state }) => (
   </Button.Group>
 );
 
-const CourseList = ({ courses }) => {
+const CourseList = ({ courses, user }) => {
   const [term, setTerm] = useState('Fall');
   const [selected, toggle] = useSelection();
   const termCourses = courses.filter(course => term === getCourseTerm(course));
@@ -60,7 +65,8 @@ const CourseList = ({ courses }) => {
       <Button.Group>
         {termCourses.map(course =>
           <Course key={course.id} course={course}
-            state={{ selected, toggle }} />)}
+            state={{ selected, toggle }}
+            user={user} />)}
       </Button.Group>
     </React.Fragment>
   );
@@ -125,41 +131,75 @@ const addScheduleTimes = schedule => ({
 const moveCourse = course => {
   const meets = prompt('Enter new meeting data, in this format:', course.meets);
   if (!meets) return;
-  const {days} = timeParts(meets);
-  if (days) saveCourse(course, meets); 
+  const { days } = timeParts(meets);
+  if (days) saveCourse(course, meets);
   else moveCourse(course);
 };
 
 const saveCourse = (course, meets) => {
-  db.child('courses').child(course.id).update({meets})
+  db.child('courses').child(course.id).update({ meets })
     .catch(error => alert(error));
 };
 
-const Course = ({ course, state }) => (
+const Course = ({ course, state, user }) => (
   <Button color={buttonColor(state.selected.includes(course))}
     onClick={() => state.toggle(course)}
-    onDoubleClick={() => moveCourse(course)}
+    onDoubleClick={user ? () => moveCourse(course) : null}
     disabled={hasConflict(course, state.selected)}
   >
     {getCourseTerm(course)} CS {getCourseNumber(course)}: {course.title}
   </Button>
 );
 
+// Firebase Authentification
+const uiConfig = {
+  signInFlow: 'popup',
+  signInOptions: [
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID
+  ],
+  callbacks: {
+    signInSuccessWithAuthResult: () => false
+  }
+};
+
+const Welcome = ({ user }) => (
+  <Message color="info">
+    <Message.Header>
+      Welcome, {user.displayName}
+      <Button primary onClick={() => firebase.auth().signOut()}>
+        Log out
+      </Button>
+    </Message.Header>
+  </Message>
+);
+
+const SignIn = () => (
+  <StyledFirebaseAuth
+    uiConfig={uiConfig}
+    firebaseAuth={firebase.auth()}
+  />
+);
+
 const App = () => {
   const [schedule, setSchedule] = useState({ title: '', courses: [] });
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const handleData = snap => {
       if (snap.val()) setSchedule(addScheduleTimes(snap.val()));
-    }
+    };
     db.on('value', handleData, error => alert(error));
     return () => { db.off('value', handleData); };
   }, []);
 
+  useEffect(() => {
+    firebase.auth().onAuthStateChanged(setUser);
+  }, []);
+
   return (
     <Container>
-      <Banner title={schedule.title} />
-      <CourseList courses={schedule.courses} />
+      <Banner title={schedule.title} user={user} />
+      <CourseList courses={schedule.courses} user={user} />
     </Container>
   );
 };
